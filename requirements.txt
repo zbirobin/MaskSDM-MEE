@@ -16,8 +16,10 @@ cycler==0.12.1
 dask==2025.3.0
 debugpy==1.8.13
 decorator==5.2.1
+descartes==1.1.0
 docker-pycreds==0.4.0
 earthengine-api==1.5.8
+elapid==1.0.1
 exceptiongroup==1.2.2
 executing==2.2.0
 filelock==3.18.0
@@ -96,6 +98,7 @@ pyzmq==26.3.0
 rasterio==1.4.3
 requests==2.32.3
 rsa==4.9
+rtree==1.4.0
 schedulefree==1.4.1
 scikit-learn==1.6.1
 scipy==1.15.2
