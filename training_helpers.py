@@ -7,7 +7,8 @@ import wandb
 
 from torch.utils.data import DataLoader
 from torcheval.metrics.functional import binary_auroc
-from schedulefree import AdamWScheduleFree 
+from schedulefree import AdamWScheduleFree
+from elapid import MaxentFeatureTransformer
 
 from losses import get_loss_fn
 from data_helpers import get_torch_dataset
@@ -28,12 +29,17 @@ def seed_everything(seed=42):
 
 def train(config, data):
     
+    if config["model"] == "Maxent":
+        feature_transformer = MaxentFeatureTransformer() # or feature_types=["linear", "hinge", "threshold", "quadratic", "product"]
+        data["x_train"] = feature_transformer.fit_transform(data["x_train"])
+        data["x_val"] = feature_transformer.transform(data["x_val"])
+        data["x_test"] = feature_transformer.transform(data["x_test"])
+        config["n_features"] = data["x_train"].shape[1]
+    
     train_loader = DataLoader(get_torch_dataset(config, data["x_train"], data["y_train"], data["satclip_embeddings_train"]), 
                               batch_size=config["batch_size"], shuffle=True, generator=torch.Generator(device=config["device"]))
     val_loader = DataLoader(get_torch_dataset(config, data["x_val"], data["y_val"], data["satclip_embeddings_val"]),
-                            batch_size=4096, shuffle=False)
-    test_loader = DataLoader(get_torch_dataset(config, data["x_test"], data["y_test"], data["satclip_embeddings_test"]),
-                            batch_size=4096, shuffle=False)
+                            batch_size=config["batch_size_eval"], shuffle=False)
     
     model = get_model(config).to(config["device"])
     
@@ -41,9 +47,14 @@ def train(config, data):
     optimizer = get_optimizer(config, model)
     model.train()
     
+    if not os.path.exists(config["save_dir"]):
+        os.makedirs(config["save_dir"])
     if config["use_wandb"]:
-        wandb.init(project="MaskSDM_final", entity="TOFILL", name=f"MaskSDM", config=config)
+        wandb.init(project=config["wandb_init"]["project"], entity=config["wandb_init"]["entity"],
+                   name=config["wandb_init"]["name"], config=config)
 
+    print("Training model...")
+    
     best_val_auc = 0
     for epoch in range(1, config["epochs"]+1):
         
@@ -72,7 +83,10 @@ def train(config, data):
                     satclip_embedding_mask = torch.zeros(len(satclip_embeddings), dtype=torch.bool).to(config["device"])
                 y_pred = model(x_batch, satclip_embeddings, x_mask.to(config["device"]), satclip_embedding_mask)
             else:
-                y_pred = model(x_batch, satclip_embeddings)
+                if config["satclip"]:
+                    y_pred = model(x_batch, satclip_embeddings)
+                else:
+                    y_pred = model(x_batch)
             
             loss = loss_fn(y_pred, y_batch)
 
@@ -89,7 +103,7 @@ def train(config, data):
             
             if best_val_auc < val_auc:
                 best_val_auc = val_auc
-                torch.save(model.state_dict(), f"models/MaskSDM_{epoch}.pt")
+                torch.save(model.state_dict(), f"{config['save_dir']}/epoch_{epoch}.pt")
             
             if config["use_wandb"]:
                 val_auc_temp = evaluate(config, model, val_loader, excluded_variables=range(1, config["n_features"]))
@@ -102,9 +116,9 @@ def train(config, data):
                            "val_auc_wc": val_auc_wc, "val_auc_loc": val_auc_loc, "val_auc_topo": val_auc_topo})
                 
         if epoch % 5 == 0:
-            torch.save(model.state_dict(), f"models/MaskSDM_{epoch}.pt")
+            torch.save(model.state_dict(), f"{config['save_dir']}/epoch_{epoch}.pt")
         
-    if config["use_wandb"]:     
+    if config["use_wandb"]:
         wandb.finish()
 
     return model
@@ -148,7 +162,10 @@ def evaluate(config, model, dataloader, excluded_variables=None):
                 satclip_embeddings_mask = torch.tensor(np.zeros(len(satclip_embeddings))).to(config["device"])
             y_pred = model(x_batch, satclip_embeddings, x_mask, satclip_embeddings_mask)
         else:
+            if config["satclip"]:
                 y_pred = model(x_batch, satclip_embeddings)
+            else:
+                y_pred = model(x_batch)
         
         preds.append(y_pred)
     

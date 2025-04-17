@@ -4,7 +4,10 @@ import verde as vd
 
 from torch.utils.data import Dataset
 
+from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
+
+GEOPLANT_PATH = "data/GeoPlant"
 
 
 def get_data(dataset):
@@ -12,12 +15,14 @@ def get_data(dataset):
     
     if dataset == "splot":        
         return get_splot_data()
+    elif dataset == "geoplant":
+        return get_geoplant_data()
     else:
         raise ValueError(f"Unknown dataset: {dataset}")
 
 
 def get_splot_data():
-    """ Load the sPlot dataset. """
+    """ Load the sPlotOpen dataset. """
         
     worldclim_data = pd.read_csv("data/worldclim_data.csv", index_col=0).set_index("PlotObservationID")
     soilgrid_data = pd.read_csv("data/soilgrid_data.csv", index_col=0).set_index("PlotObservationID")
@@ -45,11 +50,45 @@ def get_splot_data():
     return data
 
 
+def get_geoplant_data():
+    """ Load the GeoPlant dataset. """
+    
+    metadata = pd.read_csv(f"{GEOPLANT_PATH}/PA_metadata_train.csv")
+    location_data = metadata[["lon", "lat", "surveyId"]].drop_duplicates().rename(columns={"lon": "Longitude", "lat": "Latitude"}).set_index("surveyId")
+    metadata_data = metadata[["geoUncertaintyInM", "areaInM2", "surveyId"]].drop_duplicates("surveyId").set_index("surveyId")
+    
+    mlb = MultiLabelBinarizer()
+    grouped_species = metadata.groupby("speciesId").aggregate({"surveyId": list})
+    species_occurrences = mlb.fit_transform(grouped_species["surveyId"]).transpose()
+    
+    worldclim_data = pd.read_csv(f"{GEOPLANT_PATH}/PA-train-bioclimatic.csv", index_col=0)
+    soilgrid_data = pd.read_csv(f"{GEOPLANT_PATH}/PA-train-soilgrids.csv", index_col=0)
+    topographic_data = pd.read_csv(f"{GEOPLANT_PATH}/PA-train-elevation.csv", index_col=0)
+    human_data = pd.read_csv(f"{GEOPLANT_PATH}/PA-train-human_footprint.csv", index_col=0)
+    human_data = human_data.loc[:, human_data.columns.str[-2] != "9"] # Keep only most recent maps
+    
+    tabular_x = pd.concat([worldclim_data, soilgrid_data, location_data, topographic_data, metadata_data, human_data], axis=1)
+    tabular_x = tabular_x.replace([np.inf, -np.inf], np.nan)
+    tabular_x = tabular_x.mask(tabular_x.abs() > 1e+10, np.nan)
+    tabular_names = list(tabular_x.columns)
+    tabular_x = tabular_x.to_numpy().astype(np.float32)
+    
+    data = {}
+    data["tabular_x"] = tabular_x
+    data["satclip_embeddings"] = np.zeros((len(tabular_x), 256), dtype=np.float32) # Dummy embeddings
+    data["tabular_names"] = tabular_names
+    data["y"] = species_occurrences
+    
+    return data
+
+
 def get_torch_dataset(config, x, y, satclip_embeddings):
     """ Get a torch dataset for the given configuration."""
     
     if config["dataset"] == "splot":
         return SplotDataset(x, y, satclip_embeddings)
+    if config["dataset"] == "geoplant":
+        return GeoPlantDataset(x, y, satclip_embeddings)
     else:
         raise ValueError(f"Unknown dataset: {config['dataset']}")
     
@@ -102,6 +141,21 @@ def get_split_indices(data, mode="extrapolate"):
     
 
 class SplotDataset(Dataset):
+
+    def __init__(self, x, y, satclip_embeddings):
+        self.x = x
+        self.y = y
+        self.satclip_embeddings = satclip_embeddings
+        self.length = len(self.x)
+    
+    def __getitem__(self, idx):
+        return self.x[idx], self.y[idx], self.satclip_embeddings[idx]
+    
+    def __len__(self):
+        return self.length
+    
+
+class GeoPlantDataset(Dataset):
 
     def __init__(self, x, y, satclip_embeddings):
         self.x = x

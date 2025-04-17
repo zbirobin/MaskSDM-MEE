@@ -9,13 +9,22 @@ ModuleType = Union[str, Callable[..., nn.Module]]
 
 
 def get_model(config: dict) -> nn.Module:
-    if config["model"] == "FTTransformer":
+    if config["model"] == "FTTransformer": # Used by MaskSDM
         return FTTransformer(
             feature_tokenizer=FeatureTokenizer(n_features=config["n_features"], d_token=config["d_hidden"]),
-            transformer_encoder=TransformerEncoder(d_token=config["d_hidden"], n_blocks=config["n_blocks"], n_heads=config["n_heads"], dropout=config["dropout"]),
+            transformer_encoder=TransformerEncoder(d_token=config["d_hidden"], n_blocks=config["n_blocks"], 
+                                                   n_heads=config["n_heads"], dropout=config["dropout"]),
             d_hidden=config["d_hidden"],
             d_out=config["d_out"],
         )
+    elif config["model"] == "MLP":
+        return MLP(d_in=config["n_features"], d_hidden=config["d_hidden"], d_out=config["d_out"], 
+                   n_layers=config["n_layers"], dropout=config["dropout"])
+    elif config["model"] == "ResNet":
+        return ResNet(d_in=config["n_features"], d_hidden=config["d_hidden"], d_out=config["d_out"], 
+                      n_layers=config["n_layers"], dropout=config["dropout"])
+    elif config["model"] == "linear" or config["model"] == "Maxent":
+        return nn.Linear(config["n_features"], config["d_out"])
     else:
         raise ValueError(f"Unknown model: {config['model']}")
 
@@ -37,6 +46,52 @@ class PredHead(nn.Module):
             x = self.activation(x)
         x = self.linear(x)
         return x
+
+
+class MlpEncoder(nn.Module):
+    
+    class Block(nn.Module):
+
+        def __init__(self, d_in: int, d_out: int, dropout: float) -> None:
+            super().__init__()
+            self.linear = nn.Linear(d_in, d_out)
+            self.activation = nn.ReLU()
+            self.dropout = nn.Dropout(dropout)
+
+        def forward(self, x: Tensor) -> Tensor:
+            return self.dropout(self.activation(self.linear(x)))
+    
+    def __init__(self, d_in: int, d_out: int, n_layers: int, dropout: float) -> None:
+        super(MlpEncoder, self).__init__()
+        self.blocks = nn.Sequential(*[self.Block(d_in if i == 0 else d_out, d_out, dropout) for i in range(n_layers)])
+        
+    def forward(self, x: Tensor) -> Tensor:
+        return self.blocks(x)
+    
+    
+class ResNetEncoder(nn.Module):
+    
+    class Block(nn.Module):
+
+        def __init__(self, d_in: int, d_out: int, dropout: float) -> None:
+            super().__init__()
+            self.normalization = nn.BatchNorm1d(d_in)
+            self.linear1 = nn.Linear(d_in, d_out)
+            self.activation = nn.ReLU()
+            self.dropout = nn.Dropout(dropout)
+            self.linear2 = nn.Linear(d_out, d_out)
+
+        def forward(self, x: Tensor) -> Tensor:
+            return x + self.dropout(self.linear2(self.dropout(self.activation(self.linear1(self.normalization(x))))))
+    
+    def __init__(self, d_in: int, d_out: int, n_layers: int, dropout: float) -> None:
+        super().__init__()
+        self.first_layer = nn.Linear(d_in, d_out)
+        self.blocks = nn.Sequential(*[self.Block(d_out, d_out, dropout) for _ in range(n_layers)])
+        
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.first_layer(x)
+        return self.blocks(x)
         
     
 class TransformerEncoder(nn.Module):
@@ -244,7 +299,6 @@ class _NLinear(nn.Module):
         return x
 
     
-    
 class PeriodicEmbeddings(nn.Module):
 
     def __init__(
@@ -285,6 +339,30 @@ class PeriodicEmbeddings(nn.Module):
         return x
     
     
+### Model classes    
+    
+class MLP(nn.Module):
+    
+    def __init__(self, d_in: int, d_hidden: int, d_out: int, n_layers: int, dropout: float) -> None:
+        super().__init__()
+        self.mlp_encoder = MlpEncoder(d_in=d_in, d_out=d_hidden, n_layers=n_layers, dropout=dropout)
+        self.head = PredHead(d_in=d_hidden, d_out=d_out, normalization=None, activation=None)
+        
+    def forward(self, x: Tensor) -> Tensor:
+        return self.head(self.mlp_encoder(x))
+    
+    
+class ResNet(nn.Module):
+    
+    def __init__(self, d_in: int, d_hidden: int, d_out: int, n_layers: int, dropout: float) -> None:
+        super().__init__()
+        self.resnet_encoder = ResNetEncoder(d_in=d_in, d_out=d_hidden, n_layers=n_layers, dropout=dropout)
+        self.head = PredHead(d_in=d_hidden, d_out=d_out, normalization=nn.BatchNorm1d(d_hidden), activation=nn.ReLU())
+        
+    def forward(self, x: Tensor) -> Tensor:
+        return self.head(self.resnet_encoder(x))
+    
+    
 class FTTransformer(nn.Module):
     """Feature Tokenizer Transformer model."""
     
@@ -305,20 +383,21 @@ class FTTransformer(nn.Module):
             for parameter in [self.cls_tokens]:
                 nn.init.uniform_(parameter, -1 / math.sqrt(d_hidden), 1 / math.sqrt(d_hidden))
         
-    def forward(self, x: Tensor, satclip_embeddings: Tensor, x_mask: Tensor = None, satclip_embeddings_mask: Tensor = None) -> Tensor:
+    def forward(self, x: Tensor, satclip_embeddings: Tensor = None, x_mask: Tensor = None, satclip_embeddings_mask: Tensor = None) -> Tensor:
         x = self.feature_tokenizer(x)
         if x_mask is not None:
             x = torch.where(x_mask.unsqueeze(-1).expand(x.shape) == 0, 
                             self.mask_token.unsqueeze(0).unsqueeze(0).expand(x.shape), 
                             x)
-        satclip_embeddings = self.satclip_projection(satclip_embeddings)
-        if satclip_embeddings_mask is not None:
-            satclip_embeddings = torch.where(satclip_embeddings_mask.unsqueeze(-1) == 0, 
-                                             self.mask_token.unsqueeze(0).expand(satclip_embeddings.shape), 
-                                             satclip_embeddings)
+        if satclip_embeddings is not None:
+            satclip_embeddings = self.satclip_projection(satclip_embeddings)
+            if satclip_embeddings_mask is not None:
+                satclip_embeddings = torch.where(satclip_embeddings_mask.unsqueeze(-1) == 0, 
+                                                self.mask_token.unsqueeze(0).expand(satclip_embeddings.shape), 
+                                                satclip_embeddings)
         if self.num_cls_tokens > 0:
-            x = torch.cat([self.cls_tokens.repeat(len(x), 1, 1), x, satclip_embeddings.unsqueeze(1)], dim=1)
-        else:
+            x = torch.cat([self.cls_tokens.repeat(len(x), 1, 1), x], dim=1)
+        if satclip_embeddings is not None:
             x = torch.cat([x, satclip_embeddings.unsqueeze(1)], dim=1)
         x = self.transformer_encoder(x)
         if self.num_cls_tokens > 0:

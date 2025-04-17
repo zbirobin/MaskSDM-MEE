@@ -9,7 +9,7 @@ This `README.md` file provides the necessary information to reproduce all the ex
 
 ### ⚙️ Requirements
 
-This project is entirely written in Python (version 3.10.8), primarily using the PyTorch library for model training. All required dependencies can be installed in a Python virtual environment using:
+This project is entirely written in Python (version 3.10.8), primarily using the PyTorch library. All required dependencies can be installed in a Python virtual environment using:
 
 ```sh
 pip install -r requirements.txt
