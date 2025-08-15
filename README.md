@@ -9,13 +9,22 @@ This `README.md` file provides the necessary information to reproduce all the ex
 
 ### ⚙️ Requirements
 
-This project is entirely written in Python (version 3.10.8), primarily using the PyTorch library. All required dependencies can be installed in a Python virtual environment using:
+This project is entirely written in Python (version 3.10.18), primarily using the PyTorch library. All required dependencies can be installed in a Python virtual environment using:
 
 ```sh
 pip install -r requirements.txt
 ```
 
 All dependencies, along with their specific versions, are listed in the `requirements.txt` file. You may need to adjust the NVIDIA-related packages to match your hardware setup.
+
+For a fully reproducible setup, we also provide a Dockerfile. If you are familiar with Docker, you can use it to open notebooks or run Python code:
+
+```sh
+docker build -t masksdm .
+docker run -it -v $(pwd):/app --rm -p 8888:8888 masksdm
+```
+
+This Dockerfile is configured for CPU usage by default. To run it on a GPU, replace the first line with: `FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-runtime`. Note that you may need to adjust the image to match the CUDA version installed on your GPU. A list of available PyTorch images can be found [here](https://hub.docker.com/r/pytorch/pytorch/tags). Make sure to use a PyTorch 2.6 image to ensure compatibility with our code.
 
 ### 🖥️ Hardware Support
 
