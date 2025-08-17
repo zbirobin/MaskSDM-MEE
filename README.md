@@ -17,12 +17,16 @@ pip install -r requirements.txt
 
 All dependencies, along with their specific versions, are listed in the `requirements.txt` file. You may need to adjust the NVIDIA-related packages to match your hardware setup.
 
+#### 🐋 Docker
+
 For a fully reproducible setup, we also provide a Dockerfile. If you are familiar with Docker, you can use it to open notebooks or run Python code:
 
 ```sh
 docker build -t masksdm .
 docker run -it -v $(pwd):/app --rm -p 8888:8888 masksdm
 ```
+
+These commands launch a Jupyter Notebook with the environment and dependencies already installed. To access it, you may need to copy the access token shown in the terminal into the Jupyter Notebook login page. From there, you can navigate through the project files, run notebooks, or execute Python scripts (such as `train_model.py`) from a terminal opened within Jupyter Notebook.
 
 This Dockerfile is configured for CPU usage by default. To run it on a GPU, replace the first line with: `FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-runtime`. Note that you may need to adjust the image to match the CUDA version installed on your GPU. A list of available PyTorch images can be found [here](https://hub.docker.com/r/pytorch/pytorch/tags). Make sure to use a PyTorch 2.6 image to ensure compatibility with our code.
 
