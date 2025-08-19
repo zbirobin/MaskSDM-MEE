@@ -93,13 +93,11 @@ def get_torch_dataset(config, x, y, satclip_embeddings):
         raise ValueError(f"Unknown dataset: {config['dataset']}")
     
     
-def get_split_indices(data, mode="extrapolate"):
+def get_split_indices(data, mode="extrapolate", spacing=1):
     """ Get the indices for the train, validation and test sets."""
     
     test_size = 0.15
     val_size = 0.15
-    
-    spacing = 1
     
     split_seed = 42
     

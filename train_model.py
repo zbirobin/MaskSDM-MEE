@@ -24,7 +24,8 @@ n_samples, n_species = data["y"].shape
 
 # Split data into train, val, and test sets
 split_mode = "extrapolate"
-train_indices, val_indices, test_indices = get_split_indices(data, mode=split_mode)
+spacing = 5
+train_indices, val_indices, test_indices = get_split_indices(data, mode=split_mode, spacing=spacing)
 data["x_train"], data["y_train"] = data["tabular_x"][train_indices], data["y"][train_indices]
 data["x_val"], data["y_val"] = data["tabular_x"][val_indices], data["y"][val_indices]
 data["x_test"], data["y_test"] = data["tabular_x"][test_indices], data["y"][test_indices]
@@ -75,6 +76,7 @@ config["n_samples_train"] = len(data["y_train"])
 config["n_samples_val"] = len(data["y_val"])
 config["n_samples_test"] = len(data["y_test"])
 config["split_mode"] = split_mode
+config["spacing"] = spacing
 config["min_num_obs"] = min_num_obs
 config["indices_evaluated_species"] = np.intersect1d(np.intersect1d(np.sum(data["y_train"], axis=0).nonzero()[0], np.sum(data["y_val"], axis=0).nonzero()[0]),
                                                             np.sum(data["y_test"], axis=0).nonzero()[0]).tolist()
