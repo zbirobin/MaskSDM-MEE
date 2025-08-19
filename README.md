@@ -38,7 +38,7 @@ All training and experiments were performed on an NVIDIA GeForce RTX 3090 with 2
 
 ### 💾 Processed Data
 
-To avoid downloading and preprocessing the complete original raw datasets, you can directly access the processed versions [here on Zenodo](https://zenodo.org/records/15096721?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImIyM2FjMjg1LWVlZmMtNDIwOS1iZGU3LTdjMzhlNDY3YjIwYyIsImRhdGEiOnt9LCJyYW5kb20iOiIyMWE2NWU2YmU2NGY1YzVhZmM4ZWI2MWY3ODEwNDM0OSJ9.TSW3U7BAincAtI-P_tmI_CpBFjUkxRdAo2DQ9wK5TUUBd7YzG1cYi8uPXN74vZlNvxFRAzQMiRhKI1d290kepQ). All the data is available in the `data` zipped folder and should be copied and unzipped into the corresponding `data` folder of this repository.
+To avoid downloading and preprocessing the complete original raw datasets, you can directly access the processed versions [here on Zenodo](https://zenodo.org/records/16902598?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImIyM2FjMjg1LWVlZmMtNDIwOS1iZGU3LTdjMzhlNDY3YjIwYyIsImRhdGEiOnt9LCJyYW5kb20iOiIyMWE2NWU2YmU2NGY1YzVhZmM4ZWI2MWY3ODEwNDM0OSJ9.TSW3U7BAincAtI-P_tmI_CpBFjUkxRdAo2DQ9wK5TUUBd7YzG1cYi8uPXN74vZlNvxFRAzQMiRhKI1d290kepQ). All the data is available in the `data` zipped folder and should be copied and unzipped into the corresponding `data` folder of this repository.
 
 ### 📁 Data Sources
 
@@ -70,7 +70,7 @@ These notebooks require downloading the original environmental rasters and speci
 
 ### 🤖 Trained Models
 
-Trained checkpoints of the model are available [here on Zenodo](https://zenodo.org/records/15096721?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImIyM2FjMjg1LWVlZmMtNDIwOS1iZGU3LTdjMzhlNDY3YjIwYyIsImRhdGEiOnt9LCJyYW5kb20iOiIyMWE2NWU2YmU2NGY1YzVhZmM4ZWI2MWY3ODEwNDM0OSJ9.TSW3U7BAincAtI-P_tmI_CpBFjUkxRdAo2DQ9wK5TUUBd7YzG1cYi8uPXN74vZlNvxFRAzQMiRhKI1d290kepQ), allowing you to skip the training step and use the model directly.
+Trained checkpoints of the model are available [here on Zenodo](https://zenodo.org/records/16902598?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImIyM2FjMjg1LWVlZmMtNDIwOS1iZGU3LTdjMzhlNDY3YjIwYyIsImRhdGEiOnt9LCJyYW5kb20iOiIyMWE2NWU2YmU2NGY1YzVhZmM4ZWI2MWY3ODEwNDM0OSJ9.TSW3U7BAincAtI-P_tmI_CpBFjUkxRdAo2DQ9wK5TUUBd7YzG1cYi8uPXN74vZlNvxFRAzQMiRhKI1d290kepQ), allowing you to skip the training step and use the model directly.
 
 The associated files are in the `models` zipped folder and should be copied and unzipped into the corresponding `models` folder of this repository while maintaining the same folder structure.
 
@@ -108,7 +108,7 @@ During training, the model’s AUC performance on the validation set will be dis
 
 ### 📊 Shapley Value Analysis
 
-The Shapley values are precomputed and available for download [here on Zenodo](https://zenodo.org/records/15096721?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImIyM2FjMjg1LWVlZmMtNDIwOS1iZGU3LTdjMzhlNDY3YjIwYyIsImRhdGEiOnt9LCJyYW5kb20iOiIyMWE2NWU2YmU2NGY1YzVhZmM4ZWI2MWY3ODEwNDM0OSJ9.TSW3U7BAincAtI-P_tmI_CpBFjUkxRdAo2DQ9wK5TUUBd7YzG1cYi8uPXN74vZlNvxFRAzQMiRhKI1d290kepQ).
+The Shapley values are precomputed and available for download [here on Zenodo](https://zenodo.org/records/16902598?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImIyM2FjMjg1LWVlZmMtNDIwOS1iZGU3LTdjMzhlNDY3YjIwYyIsImRhdGEiOnt9LCJyYW5kb20iOiIyMWE2NWU2YmU2NGY1YzVhZmM4ZWI2MWY3ODEwNDM0OSJ9.TSW3U7BAincAtI-P_tmI_CpBFjUkxRdAo2DQ9wK5TUUBd7YzG1cYi8uPXN74vZlNvxFRAzQMiRhKI1d290kepQ).
 
 The associated files are in the `results` zipped folder and should be copied and unzipped into the corresponding `results` folder of this directory.
 
