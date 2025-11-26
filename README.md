@@ -1,7 +1,19 @@
-# MaskSDM
+# MaskSDM with Shapley values to improve flexibility, robustness, and explainability in species distribution modelling
 
-This repository contains the code to reproduce the results from the paper:
-**MaskSDM with Shapley values to improve flexibility, robustness, and explainability in species distribution modeling.**
+[![Journal](https://img.shields.io/badge/Methods_in_Ecology_and_Evolution-Published-blue)](https://doi.org/10.1111/2041-210x.70200)
+[![arXiv](https://img.shields.io/badge/arXiv-2503.13057-b31b1b.svg)](https://arxiv.org/abs/2503.13057)
+
+This repository contains the code to reproduce all experiments and results from the paper:
+
+**MaskSDM with Shapley values to improve flexibility, robustness, and explainability in species distribution modelling**  
+📄 *Methods in Ecology and Evolution*  
+🔗 [Read the paper](https://doi.org/10.1111/2041-210x.70200)
+
+</br>
+
+<p align="center">
+  <img src="figures/MaskSDM.png" width="800">
+</p>
 
 ## 🚀 Getting Started
 
@@ -128,4 +140,19 @@ The associated files are in the `results` zipped folder and should be copied and
 - **`losses.py`**: Defines the loss functions used to train the models.  
 - **`modules.py`**: Implements the PyTorch modules required to build MaskSDM.  
 - **`train_model.py`**: Runs the training process for MaskSDM and baseline models. Training and model hyperparameters are defined here and can be adjusted as needed.  
-- **`training_helpers.py`**: Includes utility functions to facilitate model training.  
+- **`training_helpers.py`**: Includes utility functions to facilitate model training.
+
+# 📚 Citation
+
+If you use MaskSDM, please cite the paper:
+
+```
+@article{zbinden2025masksdm,
+  author = {Zbinden, Robin and van Tiel, Nina and Sumbul, Gencer and Vanalli, Chiara and Kellenberger, Benjamin and Tuia, Devis},
+  title = {MaskSDM with Shapley values to improve flexibility, robustness and explainability in species distribution modelling},
+  journal = {Methods in Ecology and Evolution},
+  doi = {https://doi.org/10.1111/2041-210x.70200},
+}
+```
+
+
